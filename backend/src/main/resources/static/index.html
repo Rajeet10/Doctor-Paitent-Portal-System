@@ -1,0 +1,336 @@
+<!-- src/main/resources/static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor-Patient Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Tiny bit of styling -->
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="container">
+
+    <h1>🏥 Doctor-Patient Portal</h1>
+
+    <!-- ============ AUTH SECTION ============ -->
+    <section id="auth-section">
+        <div id="auth-tabs">
+            <button id="login-tab" class="tab active" onclick="showAuthForm('login')">Login</button>
+            <button id="register-tab" class="tab" onclick="showAuthForm('register')">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="login-form" onsubmit="login(event)">
+            <h2>Login</h2>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit">Login</button>
+            <p id="login-message" class="message"></p>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="register-form" onsubmit="registerUser(event)" style="display:none;">
+            <h2>Register</h2>
+            <div class="field">
+                <label>Name</label>
+                <input type="text" id="reg-name" required>
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="reg-email" required>
+            </div>
+            <div class="field">
+                <label>Phone</label>
+                <input type="text" id="reg-phone" required>
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="reg-password" required minlength="6">
+            </div>
+            <div class="field">
+                <label>Role</label>
+                <select id="reg-role" required>
+                    <option value="">-- Select Role --</option>
+                    <option value="PATIENT">Patient</option>
+                    <option value="DOCTOR">Doctor</option>
+                </select>
+            </div>
+            <button type="submit">Register</button>
+            <p id="register-message" class="message"></p>
+        </form>
+    </section>
+
+    <!-- ============ DASHBOARD SECTION ============ -->
+    <section id="dashboard-section" style="display:none;">
+        <div class="topbar">
+            <span id="user-info"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <h2 id="dashboard-title"></h2>
+
+        <!-- Shared actions -->
+        <div id="shared-actions">
+            <button onclick="loadDoctors()">View Doctors</button>
+            <button onclick="loadDonors()">Organ Donors</button>
+        </div>
+
+        <!-- ========== PATIENT VIEW ========== -->
+        <div id="patient-view" class="role-view" style="display:none;">
+            <h3>Patient Panel</h3>
+
+            <!-- 🔹 Step 1: Check available slots -->
+            <div class="card">
+                <h4>Check Available Slots</h4>
+                <div class="field">
+                    <label>Doctor ID</label>
+                    <input type="number" id="slot-doctor-id">
+                </div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="slot-date">
+                </div>
+                <button onclick="loadAvailableSlots()">Check Slots</button>
+                <p id="slot-check-message" class="message"></p>
+
+                <table id="available-slots-table"></table>
+            </div>
+
+            <!-- 🔹 Step 2: Book appointment (can be filled manually or from slot table) -->
+            <div class="card">
+                <h4>Book Appointment</h4>
+                <div class="field">
+                    <label>Doctor ID</label>
+                    <input type="number" id="appt-doctor-id">
+                </div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="appt-date">
+                </div>
+                <div class="field">
+                    <label>Time</label>
+                    <input type="time" id="appt-time">
+                </div>
+                <div class="field">
+                    <label>Reason</label>
+                    <input type="text" id="appt-reason">
+                </div>
+                <button onclick="bookAppointment()">Book</button>
+                <p id="appt-message" class="message"></p>
+            </div>
+
+            <div class="card">
+                <h4>My Appointments</h4>
+                <button onclick="loadPatientAppointments()">Refresh</button>
+                <table id="patient-appointments-table"></table>
+            </div>
+
+            <div class="card">
+                <h4>My Medical History</h4>
+                <button onclick="loadPatientRecords()">Refresh</button>
+                <table id="patient-records-table"></table>
+            </div>
+        </div>
+        <!-- ========== DOCTOR VIEW ========== -->
+        <div id="doctor-view" class="role-view" style="display:none;">
+            <h3>Doctor Panel</h3>
+
+            <div class="card">
+                <h4>My Slots</h4>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="doctor-slot-date">
+                </div>
+                <div class="field">
+                    <label>Time</label>
+                    <input type="time" id="doctor-slot-time">
+                </div>
+                <button onclick="addSlot()">Add Slot</button>
+                <p id="doctor-slot-message" class="message"></p>
+                <button onclick="loadDoctorSlots()">Refresh Slots</button>
+                <table id="doctor-slots-table"></table>
+            </div>
+
+
+
+            <div class="card">
+                <h4>My Appointments</h4>
+                <button onclick="loadDoctorAppointments()">Refresh</button>
+                <table id="doctor-appointments-table"></table>
+            </div>
+            <div class="card">
+                <h4>My Patients</h4>
+                <button onclick="loadDoctorPatients()">Refresh Patients</button>
+                <table id="doctor-patients-table"></table>
+            </div>
+
+            <div class="card">
+                <h4>Selected Patient Records</h4>
+                <p id="doctor-records-message" class="message"></p>
+                <table id="doctor-patient-records-table"></table>
+            </div>
+
+            <div class="card">
+                <h4>Add Medical Record</h4>
+                <div class="field">
+                    <label>Patient ID</label>
+                    <input type="number" id="rec-patient-id">
+                </div>
+                <div class="field">
+                    <label>Visit Date</label>
+                    <input type="date" id="rec-visit-date">
+                </div>
+                <div class="field">
+                    <label>Symptoms</label>
+                    <input type="text" id="rec-symptoms">
+                </div>
+                <div class="field">
+                    <label>Diagnosis</label>
+                    <input type="text" id="rec-diagnosis">
+                </div>
+                <div class="field">
+                    <label>Prescription</label>
+                    <input type="text" id="rec-prescription">
+                </div>
+
+                <!-- 🔹 NEW FIELDS ADDED BELOW -->
+                <div class="field">
+                    <label>Blood Pressure</label>
+                    <input type="text" id="rec-bp" placeholder="120/80">
+                </div>
+
+                <div class="field">
+                    <label>Temperature (F)</label>
+                    <input type="number" step="0.1" id="rec-temp" placeholder="98.6">
+                </div>
+
+                <div class="field">
+                    <label>Heart Rate (bpm)</label>
+                    <input type="number" id="rec-hr" placeholder="72">
+                </div>
+
+                <div class="field">
+                    <label>Weight (kg)</label>
+                    <input type="number" step="0.1" id="rec-weight">
+                </div>
+
+                <div class="field">
+                    <label>Notes</label>
+                    <input type="text" id="rec-notes" placeholder="Optional notes">
+                </div>
+                <button onclick="addMedicalRecord()">Save Record</button>
+                <p id="record-message" class="message"></p>
+            </div>
+        </div>
+
+        <!-- ========== ADMIN VIEW ========== -->
+        <div id="admin-view" class="role-view" style="display:none;">
+            <h3>Admin Panel</h3>
+
+            <div class="card">
+                <h4>Active Patient Count</h4>
+                <button onclick="loadPatientCount()">Refresh</button>
+                <p id="patient-count"></p>
+            </div>
+
+            <div class="card">
+                <h4>All Appointments</h4>
+                <button onclick="loadAllAppointments()">Refresh</button>
+                <table id="all-appointments-table"></table>
+            </div>
+
+            <div class="card">
+                <h4>All Patients</h4>
+                <button onclick="loadAllPatients()">Refresh</button>
+                <table id="all-patients-table"></table>
+            </div>
+
+            <div class="card">
+                <h4>All Organ Donors</h4>
+                <button onclick="loadDonors()">Refresh</button>
+                <table id="donors-table-admin"></table>
+            </div>
+        </div>
+
+        <!-- ========== SHARED: DOCTORS TABLE ========== -->
+        <div class="card" id="doctors-card">
+            <h3>Doctors</h3>
+            <table id="doctors-table"></table>
+        </div>
+
+        <!-- ========== SHARED: ORGAN DONORS TABLE + REGISTER FORM ========== -->
+        <div class="card">
+            <h3>Organ Donors</h3>
+            <div class="field-inline">
+                <input type="text" id="donor-search-blood" placeholder="Blood Group">
+                <input type="text" id="donor-search-organ" placeholder="Organ">
+                <input type="text" id="donor-search-city" placeholder="City">
+                <input type="text" id="donor-search-state" placeholder="State">
+                <button onclick="searchDonors()">Search</button>
+                <button onclick="loadDonors()">Clear</button>
+            </div>
+            <table id="donors-table"></table>
+        </div>
+
+        <div class="card">
+            <h4>Register Organ Donor</h4>
+            <div class="field">
+                <label>Name</label>
+                <input type="text" id="donor-name">
+            </div>
+            <div class="field">
+                <label>Age</label>
+                <input type="number" id="donor-age">
+            </div>
+            <div class="field">
+                <label>Gender (MALE/FEMALE/OTHER)</label>
+                <input type="text" id="donor-gender">
+            </div>
+            <div class="field">
+                <label>Blood Group</label>
+                <input type="text" id="donor-blood">
+            </div>
+            <div class="field">
+                <label>Contact Number</label>
+                <input type="text" id="donor-contact">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="donor-email">
+            </div>
+            <div class="field">
+                <label>Address</label>
+                <input type="text" id="donor-address">
+            </div>
+            <div class="field">
+                <label>City</label>
+                <input type="text" id="donor-city">
+            </div>
+            <div class="field">
+                <label>State</label>
+                <input type="text" id="donor-state">
+            </div>
+            <div class="field">
+                <label>Organs To Donate (comma separated)</label>
+                <input type="text" id="donor-organs">
+            </div>
+            <div class="field">
+                <label>Medical Conditions</label>
+                <input type="text" id="donor-conditions">
+            </div>
+            <button onclick="registerDonor()">Register Donor</button>
+            <p id="donor-message" class="message"></p>
+        </div>
+    </section>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
